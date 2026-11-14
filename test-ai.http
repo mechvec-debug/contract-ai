@@ -1,0 +1,6 @@
+POST http://localhost:4004/odata/v4/contract/runAIAnalysis
+Content-Type: application/json
+
+{
+  "contractID": "11111111-1111-1111-1111-111111111111"
+}

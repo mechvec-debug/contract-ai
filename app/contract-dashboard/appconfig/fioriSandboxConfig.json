@@ -1,0 +1,9 @@
+{
+  "applications": {
+    "Contract-display": {
+      "additionalInformation": "SAPUI5.Component=contractfiori",
+      "applicationType": "URL",
+      "url": "../resources/contractfiori"
+    }
+  }
+}

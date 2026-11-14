@@ -1,0 +1,237 @@
+_schema-version: 3.3.0
+ID: contract-ai
+description: A simple CAP project.
+version: 1.0.0
+modules:
+- name: contract-ai-srv
+  type: nodejs
+  path: gen/srv
+  requires:
+  - name: contract-ai-auth
+  - name: contract-ai-db
+  - name: contract-ai-messaging
+  - name: contract-ai-connectivity
+  - name: contract-ai-destination
+  provides:
+  - name: srv-api
+    properties:
+      srv-url: ${default-url}
+  parameters:
+    buildpack: nodejs_buildpack
+    instances: 1
+  build-parameters:
+    builder: npm-ci
+- name: contract-ai-db-deployer
+  type: hdb
+  path: gen/db
+  requires:
+  - name: contract-ai-db
+  parameters:
+    buildpack: nodejs_buildpack
+- name: contract-ai
+  type: approuter.nodejs
+  path: app/router
+  requires:
+  - name: srv-api
+    group: destinations
+    properties:
+      forwardAuthToken: true
+      name: srv-api
+      url: ~{srv-url}
+  - name: contract-ai-auth
+  - name: contract-ai-destination
+  - name: contract-ai-html5-runtime
+  - name: contract-ai-portal
+  provides:
+  - name: app-api
+    properties:
+      app-protocol: ${protocol}
+      app-uri: ${default-uri}
+  parameters:
+    disk-quota: 256M
+    keep-existing-routes: true
+    memory: 256M
+- name: contract-ai-app-deployer
+  type: com.sap.application.content
+  path: gen
+  requires:
+  - name: contract-ai-auth
+  - name: srv-api
+  - name: contract-ai-html5-repo-host
+    parameters:
+      config:
+        HTML5Runtime_enabled: true
+      content-target: true
+  parameters:
+    config:
+      destinations:
+      - Authentication: NoAuthentication
+        HTML5.DynamicDestination: true
+        HTML5.ForwardAuthToken: true
+        Name: srv-api
+        ProxyType: Internet
+        Type: HTTP
+        URL: ~{srv-api/srv-url}
+  build-parameters:
+    build-result: app/
+    requires:
+    - artifacts:
+      - contractfiori.zip
+      name: contractfiori
+      target-path: app/
+    - artifacts:
+      - contractaidashboardcontractdashboard.zip
+      name: contractaidashboardcontractdashboard
+      target-path: app/
+- name: contract-ai-portal-deployer
+  type: com.sap.application.content
+  path: app/portal
+  requires:
+  - name: contract-ai-portal
+    parameters:
+      content-target: true
+      service-key:
+        config:
+          content-endpoint: developer
+        name: contract-ai-portal-key
+  - name: contract-ai-auth
+  - name: contract-ai-html5-repo-host
+  - name: contract-ai-app-deployer
+  deployed-after:
+  - contract-ai-app-deployer
+- name: contract-ai-destinations
+  type: com.sap.application.content
+  requires:
+  - name: contract-ai-auth
+    parameters:
+      service-key:
+        name: contract-ai-auth-key
+  - name: contract-ai-html5-repo-host
+    parameters:
+      service-key:
+        name: contract-ai-html5-repo-host-key
+  - name: srv-api
+  - name: contract-ai-destination
+    parameters:
+      content-target: true
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: contract-ai-html5-repository
+          ServiceInstanceName: contract-ai-html5-repo-host
+          ServiceKeyName: contract-ai-html5-repo-host-key
+          sap.cloud.service: contractai.service
+        - Authentication: OAuth2UserTokenExchange
+          Name: contract-ai-auth
+          ServiceInstanceName: contract-ai-auth
+          ServiceKeyName: contract-ai-auth-key
+          sap.cloud.service: contractai.service
+        existing_destinations_policy: update
+  build-parameters:
+    no-source: true
+- name: contractfiori
+  type: html5
+  path: app/contract-fiori
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+- name: contractaidashboardcontractdashboard
+  type: html5
+  path: app/contract-dashboard
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: contract-ai-auth
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      oauth2-configuration:
+        credential-types:
+        - binding-secret
+        - x509
+        redirect-uris:
+        - https://*~{app-api/app-uri}/**
+      tenant-mode: dedicated
+      xsappname: contract-ai-${org}-${space}
+    path: ./xs-security.json
+    service: xsuaa
+    service-plan: application
+  processed-after:
+  - contract-ai-messaging
+  requires:
+  - name: app-api
+- name: contract-ai-db
+  type: com.sap.xs.hdi-container
+  parameters:
+    service: hana
+    service-plan: hdi-shared
+- name: contract-ai-messaging
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./event-mesh.json
+    service: enterprise-messaging
+    service-plan: default
+- name: contract-ai-connectivity
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: connectivity
+    service-plan: lite
+- name: contract-ai-destination
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          - Authentication: NoAuthentication
+            HTML5.DynamicDestination: true
+            HTML5.ForwardAuthToken: true
+            Name: srv-api
+            ProxyType: Internet
+            Type: HTTP
+            URL: ~{srv-api/srv-url}
+          existing_destinations_policy: update
+    service: destination
+    service-plan: lite
+  requires:
+  - name: srv-api
+- name: contract-ai-html5-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-host
+- name: contract-ai-html5-runtime
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-runtime
+- name: contract-ai-portal
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: portal
+    service-plan: standard
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm ci
+    - npx cds build --production

@@ -1,0 +1,53 @@
+{
+  "name": "contract-ai",
+  "version": "1.0.0",
+  "dependencies": {
+    "@cap-js/hana": "^2",
+    "@sap/cds": "^9",
+    "@sap/xssec": "^4"
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "^2.4",
+    "@sap/cds-dk": "^9",
+    "cds-plugin-ui5": "^0.17.0",
+    "rimraf": "^5.0.5",
+    "mbt": "^1.2.49"
+  },
+  "scripts": {
+    "start": "cds-serve",
+    "watch-contract-fiori": "cds watch --open contractfiori/index.html?sap-ui-xx-viewCache=false --livereload false",
+    "undeploy": "cf undeploy contract-ai --delete-services --delete-service-keys --delete-service-brokers",
+    "build": "rimraf resources mta_archives && mbt build --mtar archive",
+    "deploy": "cf deploy mta_archives/archive.mtar --retries 1",
+    "watch-contract-dashboard": "cds watch --open contract.ai.dashboard.contractdashboard/index.html?sap-ui-xx-viewCache=false --livereload false"
+  },
+  "private": true,
+  "cds": {
+    "requires": {
+      "db": {
+        "kind": "sqlite",
+        "credentials": {
+          "url": "db.sqlite"
+        }
+      },
+      "[production]": {
+        "auth": "xsuaa"
+      },
+      "messaging": {
+        "kind": "enterprise-messaging"
+      },
+      "connectivity": true,
+      "destinations": true,
+      "html5-repo": true,
+      "portal": true,
+      "workzone": true
+    }
+  },
+  "workspaces": [
+    "app/*"
+  ],
+  "sapux": [
+    "app/contract-fiori",
+    "app/contract-dashboard"
+  ]
+}

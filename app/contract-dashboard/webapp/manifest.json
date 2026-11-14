@@ -1,0 +1,183 @@
+
+{
+  "_version": "1.89.0",
+  "sap.app": {
+    "id": "contract.ai.dashboard.contractdashboard",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:alp",
+      "version": "1.32.0",
+      "toolsId": "1006b9c4-e9cf-4f87-bc98-1e3840d888ed"
+    },
+"dataSources": {
+  "mainService": {
+    "uri": "/odata/v4/contract/",
+    "type": "OData",
+    "settings": {
+      "annotations": [],
+      "odataVersion": "4.0"
+    }
+  }
+},
+"crossNavigation": {
+  "inbounds": {},
+  "outbounds": {
+    "Contract-display": {
+      "semanticObject": "Contract",
+      "action": "display",
+      "parameters": {
+        "ID": {
+          "value": {
+            "format": "binding",
+            "value": "ID"
+          }
+        }
+      }
+    }
+  }
+}
+},
+"sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.152.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.fe.templates": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "contract.ai.dashboard.contractdashboard.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+              "settings": {
+                "operationMode": "Server",
+                "autoExpandSelect": true,
+                "earlyRequests": true
+              }
+            },
+            "@i18n": {
+              "type": "sap.ui.model.resource.ResourceModel",
+              "uri": "i18n/i18n.properties"
+            }
+          },
+          "resources": {
+            "css": []
+          },
+          "routing": {
+            "config": {},
+            "routes": [
+              {
+                "pattern": ":?query:",
+                "name": "ContractAnalyticsList",
+                "target": "ContractAnalyticsList"
+              },
+              {
+                "pattern": "ContractAnalytics({key}):?query:",
+                "name": "ContractAnalyticsObjectPage",
+                "target": "ContractAnalyticsObjectPage"
+              }
+            ],
+            "targets": {
+              "ContractAnalyticsList": {
+                "type": "Component",
+                "id": "ContractAnalyticsList",
+                "name": "sap.fe.templates.ListReport",
+                "options": {
+                  "settings": {
+          "contextPath": "/ContractAnalytics",
+          "variantManagement": "Page",
+
+                "keyPerformanceIndicators": {
+                    "TotalContracts": {
+                        "entitySet": "ContractAnalytics",
+                        "qualifier": "TotalContracts"
+                    },
+                    "CriticalContracts": {
+                        "entitySet": "ContractAnalytics",
+                        "qualifier": "CriticalContracts"
+                    }
+                },
+
+          "views": {
+              "paths": [
+                  {
+                      "primary": [
+                          {
+                              "annotationPath": "com.sap.vocabularies.UI.v1.PresentationVariant#Dashboard"
+                          }
+                      ],
+                      "secondary": [
+                          {
+                              "annotationPath": "com.sap.vocabularies.UI.v1.LineItem"
+                          }
+                      ],
+                      "defaultPath": "both"
+                  }
+              ]
+          }
+      }
+          }
+        },
+        "ContractAnalyticsObjectPage": {
+          "type": "Component",
+          "id": "ContractAnalyticsObjectPage",
+          "name": "sap.fe.templates.ObjectPage",
+          "options": {
+            "settings": {
+              "editableHeaderContent": false,
+              "contextPath": "/ContractAnalytics"
+            }
+          }
+        }
+      }
+    }
+  },
+  "sap.fiori": {
+    "registrationIds": [],
+    "archeType": "analytical"
+  },
+  "sap.fe": {
+    "app": {
+      "enableLazyLoading": true
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "contractai.service"
+  }
+}
